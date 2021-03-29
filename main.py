@@ -71,7 +71,7 @@ def run_rose():
 
     elif 'time' in command:
         __time__ = datetime.datetime.now().strftime('%H:%M')
-        timeInAMPM = datetime.datetime.now().strftime('%I:%M %p')
+        timeInAMPM = datetime.datetime.now().strftime('%I %M %p')
         talk('Its now '+  __time__)
         talk('or'+ timeInAMPM)
   
