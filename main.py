@@ -7,44 +7,44 @@ import datetime
 import wikipedia as w
 import pyjokes as pj
 import time
-
+global interrupted
+    
 listener =  sr.Recognizer()
 engine = ts.init()
 
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[3].id)
+interrupted = False   
 
 def talk(text):
     engine.say(text)
     engine.runAndWait()
 
-def take_command():
-    x = False
-    try:
-        with sr.Microphone() as source:
-            print("listening...")
-            voice = listener.listen(source)
-            myVoice = listener.recognize_google(voice)
-            myVoice = myVoice.lower()
-            print('You said: '+myVoice)
-            x = True
-            
-    except:
-        print("couldn't hear you...:/")
-        talk("Sorry, I couldn't hear you. Come again please")
-        pass
-    if x:
-        return myVoice
+def take_command(): 
 
+    with sr.Microphone(sample_rate = 20000) as source:
+        print("listening...")
+        voice = listener.record(source,duration= 5)
+        
+        try:
+            myVoice = listener.recognize_google(voice, language='en-IN')  # convert audio to text
+        except sr.UnknownValueError:  # error: recognizer does not understand
+            talk("I did not get that")
+            run_rose()
+        except sr.RequestError:
+            # error: recognizer is not connected
+            talk('Sorry, the service is down')
+            run_rose()
+        myVoice = myVoice.lower()
+    return myVoice
 
-def finish():
-    talk("Time is up, Time is up")
-  
 
 def run_rose():
     command = take_command()
     print('Entered run_rose function')
-    print('This is sonething I got:' + command)
+    k = 'This is something I got: ' + command
+    talk(k)
+
     if 'play' in command:
     
         meta = command.replace('play','')
@@ -53,21 +53,7 @@ def run_rose():
         print('playing'+ song)
         talk('playing'+ song)
         pywhatkit.playonyt(song)
-           
-    elif 'set a timer for' in command:
-
-        meta = [int(s) for s in command.split() if s.isdigit()]
-        print(meta)
-        time.sleep(3)
-        if 'minutes' in command:
-            talk('Setting a timer for ' +str(meta[0])+ 'and ' +str(meta[1])+ 'seconds' )
-        else:
-            talk('Setting a timer for '+str(meta[0])+'seconds')
-        seconds = meta[0]*60 + meta[1]
-        print(seconds)
-        time.sleep(seconds)
-        finish()
-        print("Exit\n")
+    
 
     elif 'time' in command:
         __time__ = datetime.datetime.now().strftime('%H:%M')
@@ -76,42 +62,34 @@ def run_rose():
         talk('or'+ timeInAMPM)
   
     elif 'joke' in command:
-        talk(pj.get_joke())
+        joke = pj.get_joke()
+        talk(joke)
+        print(joke)
 
-    elif 'exit' in command:
+    elif 'quit' in command:
         talk('Tata Bye bye')
-        interrupted = True
-        pass
+        return interrupted == True
 
     elif 'who is' in command:
-        #item0 = command.replace('who is','')
-        info = w.summary(command,1)
+        item0 = command.replace('who is','')
+        info = w.summary(item0,1)
         print(info)
         talk(info)
 
     else :
         talk('Sorry? I didn\'t get you')
 
-global interrupted
-global alreadyPlaying
-interrupted = False
-alreadyPlaying = False
-print('Welcome to VoiceAssistance by Nidhi')
+def WakeUpCall(): 
+    talk("Hi I am Nidhi. How can I help?")
+    print('How can I help?')
 
-while True:
-    with sr.Microphone() as source:
-        print('Waiting for you voice')
-        wakeupword = listener.listen(source)
-        WuW = listener.recognize_google(wakeupword)
-        WuW = WuW.lower()
-        print('aapne kaha '+ WuW)
-    if 'julie' in WuW:
-        talk('Hi I\'m Julie. How can I help?')
-        print('How can I help?')
+def main():
+         
+    WakeUpCall()
+    while True:
+        run_rose()
+
+
+if __name__ == '__main__':
+    main()
     
-        while True:
-            run_rose()
-            if interrupted :
-                break
-
-print('ending session')
